@@ -57,4 +57,9 @@ class AqiViewModel(
         currentCity.postValue(cityName)
         loadAqiData()
     }
+
+    // 新增：提供给设置页面调用的状态切换方法
+    fun toggleDetailedPollutants(show: Boolean) {
+        showDetailedPollutants.postValue(show)
+    }
 }
