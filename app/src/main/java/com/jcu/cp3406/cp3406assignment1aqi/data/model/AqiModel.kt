@@ -11,8 +11,8 @@ data class AqiResponse(
  * Real-time air quality indicator data fields
  */
 data class AqiCurrent(
-    val european_aqi: Int,   // European AQI standard index
-    val pm2_5: Float,        // PM2.5 concentration (μg/m³)
-    val pm10: Float,         // PM10 concentration (μg/m³)
-    val o3: Float            // Ozone concentration (μg/m³)
+    val european_aqi: Int,
+    val pm2_5: Float,
+    val pm10: Float,
+    val o3: Float
 )

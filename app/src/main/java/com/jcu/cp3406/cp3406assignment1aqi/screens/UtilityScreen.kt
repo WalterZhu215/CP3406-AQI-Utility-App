@@ -37,6 +37,7 @@ fun UtilityScreen(
     val isLoading by viewModel.isLoading.observeAsState()
     val errorMessage by viewModel.errorMessage.observeAsState()
     val currentCity by viewModel.currentCity.observeAsState()
+    val showDetailedPollutants by viewModel.showDetailedPollutants.observeAsState()
 
     Column(
         modifier = modifier
@@ -107,22 +108,25 @@ fun UtilityScreen(
                 }
             }
 
-            Text(
-                text = "Pollutant Details",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-            )
+            // Control display by settings switch
+            if (showDetailedPollutants == true) {
+                Text(
+                    text = "Pollutant Details",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                PollutantCard(label = "PM2.5", value = "${data.current.pm2_5}", unit = "μg/m³")
-                PollutantCard(label = "PM10", value = "${data.current.pm10}", unit = "μg/m³")
-                PollutantCard(label = "O₃", value = "${data.current.o3}", unit = "μg/m³")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PollutantCard(label = "PM2.5", value = "${data.current.pm2_5}", unit = "μg/m³")
+                    PollutantCard(label = "PM10", value = "${data.current.pm10}", unit = "μg/m³")
+                    PollutantCard(label = "O₃", value = "${data.current.o3}", unit = "μg/m³")
+                }
             }
         }
 
