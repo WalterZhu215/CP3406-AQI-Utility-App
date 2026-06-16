@@ -39,7 +39,6 @@ class MainActivity : ComponentActivity() {
  */
 @Composable
 fun UtilityApp() {
-    // Track selected navigation tab
     var selectedTab by remember { mutableIntStateOf(0) }
     val navItems = listOf(
         "Home" to Icons.Filled.Home,
@@ -61,7 +60,6 @@ fun UtilityApp() {
             }
         }
     ) { innerPadding ->
-        // Switch screens based on selected tab
         when (selectedTab) {
             0 -> UtilityScreen(modifier = Modifier.padding(innerPadding))
             1 -> SettingsScreen(modifier = Modifier.padding(innerPadding))
