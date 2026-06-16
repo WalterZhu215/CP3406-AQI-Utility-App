@@ -8,7 +8,7 @@ import retrofit2.Call
 class AqiRepository {
 
     fun fetchAirQuality(lat: Double, lon: Double): Call<AqiResponse> {
-        return RetrofitClient.aqiApi.getAirQuality(latitude = lat, longitude = lon)
+        return RetrofitClient.aqiApi.getAirQuality(lat, lon)
     }
 
     fun getMockAqiData(): AqiResponse {

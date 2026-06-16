@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.livedata.observeAsState
 import com.jcu.cp3406.cp3406assignment1aqi.presentation.viewmodel.AqiViewModel
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun UtilityScreen(
@@ -38,6 +39,10 @@ fun UtilityScreen(
     val errorMessage by viewModel.errorMessage.observeAsState()
     val currentCity by viewModel.currentCity.observeAsState()
     val showDetailedPollutants by viewModel.showDetailedPollutants.observeAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadAqiData()
+    }
 
     Column(
         modifier = modifier
