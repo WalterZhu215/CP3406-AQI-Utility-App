@@ -22,19 +22,47 @@ class AqiViewModel(
     val currentCity = MutableLiveData("Melbourne")
     val showDetailedPollutants = MutableLiveData(true)
     val useChineseStandard = MutableLiveData(false)
-
-    // 新增：记录最后更新的时间
     val lastUpdatedTime = MutableLiveData("")
 
+    // 扩充：内置全球主要核心城市的坐标库
     private val cityCoordinates = mapOf(
+        // Oceania
         "Melbourne" to Pair(-37.81, 144.96),
         "Sydney" to Pair(-33.87, 151.21),
         "Brisbane" to Pair(-27.47, 153.03),
+        "Perth" to Pair(-31.95, 115.86),
+        "Auckland" to Pair(-36.85, 174.76),
+
+        // Asia
         "Beijing" to Pair(39.90, 116.40),
         "Shanghai" to Pair(31.23, 121.47),
+        "Guangzhou" to Pair(23.12, 113.26),
         "Tokyo" to Pair(35.67, 139.65),
+        "Seoul" to Pair(37.56, 126.97),
+        "Singapore" to Pair(1.35, 103.81),
+        "Bangkok" to Pair(13.75, 100.50),
+        "Mumbai" to Pair(19.07, 72.87),
+        "Dubai" to Pair(25.20, 55.27),
+
+        // Europe
+        "London" to Pair(51.50, -0.12),
+        "Paris" to Pair(48.85, 2.35),
+        "Berlin" to Pair(52.52, 13.40),
+        "Rome" to Pair(41.90, 12.49),
+        "Madrid" to Pair(40.41, -3.70),
+        "Moscow" to Pair(55.75, 37.61),
+
+        // Americas
         "New York" to Pair(40.71, -74.00),
-        "London" to Pair(51.50, -0.12)
+        "Los Angeles" to Pair(34.05, -118.24),
+        "Toronto" to Pair(43.65, -79.38),
+        "Vancouver" to Pair(49.28, -123.12),
+        "Mexico City" to Pair(19.43, -99.13),
+        "São Paulo" to Pair(-23.55, -46.63),
+
+        // Africa
+        "Cairo" to Pair(30.04, 31.23),
+        "Cape Town" to Pair(-33.92, 18.42)
     )
 
     val availableCities = cityCoordinates.keys.toList()
@@ -49,7 +77,7 @@ class AqiViewModel(
         repository.fetchAirQuality(lat, lon).enqueue(object : Callback<AqiResponse> {
             override fun onResponse(call: Call<AqiResponse>, response: Response<AqiResponse>) {
                 isLoading.postValue(false)
-                updateTimestamp() // 无论成功与否，刷新时间戳
+                updateTimestamp()
 
                 if (response.isSuccessful && response.body() != null) {
                     aqiData.postValue(response.body())
@@ -61,14 +89,12 @@ class AqiViewModel(
 
             override fun onFailure(call: Call<AqiResponse>, t: Throwable) {
                 isLoading.postValue(false)
-                updateTimestamp() // 网络失败也要刷新时间戳（展示demo数据的时间）
-
+                updateTimestamp()
                 aqiData.postValue(repository.getMockAqiData())
                 errorMessage.postValue("Network error, showing demo data")
             }
         })
     }
-
 
     private fun updateTimestamp() {
         val currentTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())

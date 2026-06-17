@@ -1,6 +1,5 @@
 package com.jcu.cp3406.cp3406assignment1aqi.screens
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -27,6 +31,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.jcu.cp3406.cp3406assignment1aqi.presentation.viewmodel.AqiViewModel
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class) // 声明使用 M3 的实验性下拉刷新 API
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UtilityScreen(
     modifier: Modifier = Modifier,
@@ -51,29 +58,26 @@ fun UtilityScreen(
     val useChineseStandard by viewModel.useChineseStandard.observeAsState(false)
     val lastUpdatedTime by viewModel.lastUpdatedTime.observeAsState("")
 
-    // 初始化下拉刷新状态
+    // 搜索框专属状态
+    var searchQuery by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
+
     val pullRefreshState = rememberPullToRefreshState()
 
-    // 页面初次加载时请求数据
     LaunchedEffect(Unit) {
         viewModel.loadAqiData()
     }
 
-    // 监听下拉刷新动作触发 API 请求
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(true) {
             viewModel.loadAqiData()
         }
     }
 
-    // 监听加载状态，当加载完成时，收起刷新动画
     LaunchedEffect(isLoading) {
-        if (!isLoading) {
-            pullRefreshState.endRefresh()
-        }
+        if (!isLoading) pullRefreshState.endRefresh()
     }
 
-    // 使用 Box 作为最外层，以支持嵌套滚动和刷新指示器的叠加
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -82,7 +86,7 @@ fun UtilityScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()) // 关键：开启垂直滚动以支持下拉动作
+                .verticalScroll(rememberScrollState())
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -96,11 +100,10 @@ fun UtilityScreen(
             Text(
                 text = "Current Location: $currentCity",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
 
-            // 新增：显示最后更新时间
             if (lastUpdatedTime.isNotEmpty()) {
                 Text(
                     text = "Last updated: $lastUpdatedTime",
@@ -112,7 +115,6 @@ fun UtilityScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // 首次加载的中心 Loading 圈
             if (isLoading && aqiData == null) {
                 Box(modifier = Modifier.height(300.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -129,15 +131,11 @@ fun UtilityScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = aqiColor.copy(alpha = 0.15f)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = aqiColor.copy(alpha = 0.15f)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -166,22 +164,14 @@ fun UtilityScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "💡",
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(end = 12.dp)
-                        )
+                        Text(text = "💡", fontSize = 20.sp, modifier = Modifier.padding(end = 12.dp))
                         Text(
                             text = healthAdvice,
                             style = MaterialTheme.typography.bodyMedium,
@@ -196,9 +186,7 @@ fun UtilityScreen(
                         text = "Pollutant Details",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 12.dp)
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
                     )
 
                     Row(
@@ -222,41 +210,59 @@ fun UtilityScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Switch City",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-            )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            // 新增功能：可搜索的全球城市切换下拉框
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                viewModel.availableCities.forEach { city ->
-                    val isSelected = (currentCity == city)
-                    if (isSelected) {
-                        Button(onClick = { /* Already selected */ }) {
-                            Text(city)
-                        }
-                    } else {
-                        OutlinedButton(onClick = { viewModel.switchCity(city) }) {
-                            Text(city)
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        expanded = true // 用户打字时自动展开联想菜单
+                    },
+                    label = { Text("Search Global City") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    singleLine = true,
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                // 核心过滤逻辑：忽略大小写匹配包含用户输入的城市
+                val filteredCities = viewModel.availableCities.filter {
+                    it.contains(searchQuery, ignoreCase = true)
+                }
+
+                if (filteredCities.isNotEmpty() && expanded) {
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        filteredCities.forEach { city ->
+                            DropdownMenuItem(
+                                text = { Text(city, style = MaterialTheme.typography.bodyLarge) },
+                                onClick = {
+                                    searchQuery = "" // 选中后清空输入框
+                                    expanded = false
+                                    viewModel.switchCity(city) // 触发网络请求
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                            )
                         }
                     }
                 }
             }
-            // 底部留白，确保能滚动到底
+
             Spacer(modifier = Modifier.height(40.dp))
         }
 
-        // 下拉刷新指示器 (置于页面顶部)
         PullToRefreshContainer(
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter)
@@ -271,28 +277,14 @@ fun PollutantCard(label: String, value: String, unit: String) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = unit,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(text = unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
