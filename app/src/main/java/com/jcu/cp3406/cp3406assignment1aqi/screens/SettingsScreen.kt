@@ -22,10 +22,10 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: AqiViewModel = koinViewModel() // 使用 Koin 注入同一个 ViewModel 实例
+    viewModel: AqiViewModel = koinViewModel()
 ) {
-    // 观察 ViewModel 中的状态，默认为 true
     val showDetailedPollutants by viewModel.showDetailedPollutants.observeAsState(initial = true)
+    val useChineseStandard by viewModel.useChineseStandard.observeAsState(initial = false)
 
     Column(
         modifier = modifier
@@ -37,6 +37,7 @@ fun SettingsScreen(
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 24.dp)
         )
+
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -57,10 +58,33 @@ fun SettingsScreen(
 
             Switch(
                 checked = showDetailedPollutants,
-                onCheckedChange = { isChecked ->
-                    // 触发 ViewModel 中的更新方法
-                    viewModel.toggleDetailedPollutants(isChecked)
-                }
+                onCheckedChange = { viewModel.toggleDetailedPollutants(it) }
+            )
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Use Chinese AQI Standard",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "Evaluate air quality categories and levels using China National Standards (HJ 633-2012)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Switch(
+                checked = useChineseStandard,
+                onCheckedChange = { viewModel.toggleChineseStandard(it) }
             )
         }
 

@@ -1,5 +1,6 @@
 package com.jcu.cp3406.cp3406assignment1aqi.screens
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,24 +11,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.livedata.observeAsState
 import com.jcu.cp3406.cp3406assignment1aqi.presentation.viewmodel.AqiViewModel
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun UtilityScreen(
@@ -39,6 +42,7 @@ fun UtilityScreen(
     val errorMessage by viewModel.errorMessage.observeAsState()
     val currentCity by viewModel.currentCity.observeAsState()
     val showDetailedPollutants by viewModel.showDetailedPollutants.observeAsState()
+    val useChineseStandard by viewModel.useChineseStandard.observeAsState(initial = false)
 
     LaunchedEffect(Unit) {
         viewModel.loadAqiData()
@@ -73,7 +77,7 @@ fun UtilityScreen(
 
         aqiData?.let { data ->
             val aqiValue = data.current.european_aqi
-            val aqiLevel = getAqiLevel(aqiValue)
+            val aqiLevel = getAqiLevel(aqiValue, useChineseStandard)
             val aqiColor = getAqiColor(aqiValue)
 
             Card(
@@ -92,7 +96,7 @@ fun UtilityScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "AQI Index",
+                        text = if (useChineseStandard) "空气质量指数 (AQI)" else "AQI Index",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -113,7 +117,6 @@ fun UtilityScreen(
                 }
             }
 
-            // Control display by settings switch
             if (showDetailedPollutants == true) {
                 Text(
                     text = "Pollutant Details",
@@ -155,41 +158,24 @@ fun UtilityScreen(
                 .padding(bottom = 12.dp)
         )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = { viewModel.switchCity("Melbourne") },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Melbourne")
-            }
-            Button(
-                onClick = { viewModel.switchCity("Sydney") },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Sydney")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                onClick = { viewModel.switchCity("Brisbane") },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Brisbane")
-            }
-            Button(
-                onClick = { viewModel.switchCity("Beijing") },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Beijing")
+            viewModel.availableCities.forEach { city ->
+                val isSelected = (currentCity == city)
+                if (isSelected) {
+                    Button(onClick = { /* Already selected */ }) {
+                        Text(city)
+                    }
+                } else {
+                    OutlinedButton(onClick = { viewModel.switchCity(city) }) {
+                        Text(city)
+                    }
+                }
             }
         }
     }
@@ -228,13 +214,24 @@ fun PollutantCard(label: String, value: String, unit: String) {
     }
 }
 
-fun getAqiLevel(aqi: Int): String {
-    return when {
-        aqi <= 50 -> "Good"
-        aqi <= 100 -> "Fair"
-        aqi <= 150 -> "Moderate"
-        aqi <= 200 -> "Poor"
-        else -> "Very Poor"
+
+fun getAqiLevel(aqi: Int, useChineseStandard: Boolean): String {
+    return if (useChineseStandard) {
+        when {
+            aqi <= 50 -> "优 (Excellent)"
+            aqi <= 100 -> "良 (Good)"
+            aqi <= 150 -> "轻度污染 (Mildly Polluted)"
+            aqi <= 200 -> "中度污染 (Moderately Polluted)"
+            else -> "重度污染 (Severely Polluted)"
+        }
+    } else {
+        when {
+            aqi <= 50 -> "Good"
+            aqi <= 100 -> "Fair"
+            aqi <= 150 -> "Moderate"
+            aqi <= 200 -> "Poor"
+            else -> "Very Poor"
+        }
     }
 }
 

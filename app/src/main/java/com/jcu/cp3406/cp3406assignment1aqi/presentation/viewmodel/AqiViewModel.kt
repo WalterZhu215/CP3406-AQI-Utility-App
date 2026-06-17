@@ -20,12 +20,20 @@ class AqiViewModel(
     val showDetailedPollutants = MutableLiveData(true)
     val useChineseStandard = MutableLiveData(false)
 
+
     private val cityCoordinates = mapOf(
         "Melbourne" to Pair(-37.81, 144.96),
         "Sydney" to Pair(-33.87, 151.21),
         "Brisbane" to Pair(-27.47, 153.03),
-        "Beijing" to Pair(39.90, 116.40)
+        "Beijing" to Pair(39.90, 116.40),
+        "Shanghai" to Pair(31.23, 121.47),
+        "Tokyo" to Pair(35.67, 139.65),
+        "New York" to Pair(40.71, -74.00),
+        "London" to Pair(51.50, -0.12)
     )
+
+
+    val availableCities = cityCoordinates.keys.toList()
 
     fun loadAqiData() {
         isLoading.postValue(true)
@@ -58,8 +66,12 @@ class AqiViewModel(
         loadAqiData()
     }
 
-    // 新增：提供给设置页面调用的状态切换方法
     fun toggleDetailedPollutants(show: Boolean) {
         showDetailedPollutants.postValue(show)
+    }
+
+
+    fun toggleChineseStandard(useChinese: Boolean) {
+        useChineseStandard.postValue(useChinese)
     }
 }
