@@ -44,12 +44,18 @@ import androidx.compose.ui.unit.sp
 import com.jcu.cp3406.cp3406assignment1aqi.presentation.viewmodel.AqiViewModel
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * The main dashboard screen displaying the core utility of the app.
+ * Provides at-a-glance AQI data, actionable health advice, and a searchable city dropdown.
+ * Implements a pull-to-refresh mechanism for fetching the latest data.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UtilityScreen(
     modifier: Modifier = Modifier,
     viewModel: AqiViewModel = koinViewModel()
 ) {
+    // UI State Observers
     val aqiData by viewModel.aqiData.observeAsState()
     val isLoading by viewModel.isLoading.observeAsState(false)
     val errorMessage by viewModel.errorMessage.observeAsState("")
@@ -58,26 +64,31 @@ fun UtilityScreen(
     val useChineseStandard by viewModel.useChineseStandard.observeAsState(false)
     val lastUpdatedTime by viewModel.lastUpdatedTime.observeAsState("")
 
-    // 搜索框专属状态
+    // Local states for managing the searchable dropdown menu
     var searchQuery by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
+    // State for M3 Pull-To-Refresh functionality
     val pullRefreshState = rememberPullToRefreshState()
 
+    // Trigger initial API call when the screen is first composed
     LaunchedEffect(Unit) {
         viewModel.loadAqiData()
     }
 
+    // Trigger API call when the user executes a pull-down gesture
     if (pullRefreshState.isRefreshing) {
         LaunchedEffect(true) {
             viewModel.loadAqiData()
         }
     }
 
+    // Dismiss the refresh loading indicator automatically when data loading completes
     LaunchedEffect(isLoading) {
         if (!isLoading) pullRefreshState.endRefresh()
     }
 
+    // Box container is required to layer the PullToRefreshIndicator over the scrollable content
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -86,10 +97,11 @@ fun UtilityScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()) // Enables vertical scrolling required for pull-to-refresh
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Header Section
             Text(
                 text = "Air Quality Monitor",
                 style = MaterialTheme.typography.headlineMedium,
@@ -104,6 +116,7 @@ fun UtilityScreen(
                 modifier = Modifier.padding(bottom = 4.dp)
             )
 
+            // Timestamp Indicator
             if (lastUpdatedTime.isNotEmpty()) {
                 Text(
                     text = "Last updated: $lastUpdatedTime",
@@ -115,18 +128,21 @@ fun UtilityScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
+            // Initial Loading State Spinner
             if (isLoading && aqiData == null) {
                 Box(modifier = Modifier.height(300.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
 
+            // Data Rendering Section
             aqiData?.let { data ->
                 val aqiValue = data.current.european_aqi
                 val aqiLevel = getAqiLevel(aqiValue, useChineseStandard)
                 val aqiColor = getAqiColor(aqiValue)
                 val healthAdvice = getHealthAdvice(aqiValue, useChineseStandard)
 
+                // 1. Primary AQI Index Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -160,6 +176,7 @@ fun UtilityScreen(
                     }
                 }
 
+                // 2. Actionable Health Advice Card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -181,6 +198,7 @@ fun UtilityScreen(
                     }
                 }
 
+                // 3. Optional Pollutant Details (Controlled by Settings)
                 if (showDetailedPollutants) {
                     Text(
                         text = "Pollutant Details",
@@ -201,6 +219,7 @@ fun UtilityScreen(
                 }
             }
 
+            // Error Message Display
             if (errorMessage.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -212,7 +231,7 @@ fun UtilityScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 新增功能：可搜索的全球城市切换下拉框
+            // Global City Search Dropdown Component
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = it },
@@ -222,7 +241,7 @@ fun UtilityScreen(
                     value = searchQuery,
                     onValueChange = {
                         searchQuery = it
-                        expanded = true // 用户打字时自动展开联想菜单
+                        expanded = true // Auto-expand when user types
                     },
                     label = { Text("Search Global City") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
@@ -234,7 +253,7 @@ fun UtilityScreen(
                         .fillMaxWidth()
                 )
 
-                // 核心过滤逻辑：忽略大小写匹配包含用户输入的城市
+                // Filter logic: Ignore case mapping based on user input
                 val filteredCities = viewModel.availableCities.filter {
                     it.contains(searchQuery, ignoreCase = true)
                 }
@@ -249,9 +268,9 @@ fun UtilityScreen(
                             DropdownMenuItem(
                                 text = { Text(city, style = MaterialTheme.typography.bodyLarge) },
                                 onClick = {
-                                    searchQuery = "" // 选中后清空输入框
+                                    searchQuery = "" // Reset query after selection
                                     expanded = false
-                                    viewModel.switchCity(city) // 触发网络请求
+                                    viewModel.switchCity(city) // Trigger data fetch
                                 },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
@@ -260,9 +279,11 @@ fun UtilityScreen(
                 }
             }
 
+            // Bottom padding to ensure dropdown items can be scrolled comfortably above bottom nav
             Spacer(modifier = Modifier.height(40.dp))
         }
 
+        // The visual indicator for pull-to-refresh
         PullToRefreshContainer(
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter)
@@ -270,6 +291,9 @@ fun UtilityScreen(
     }
 }
 
+/**
+ * A reusable UI component (Card) specifically designed to display a single pollutant's data.
+ */
 @Composable
 fun PollutantCard(label: String, value: String, unit: String) {
     Card(
@@ -289,6 +313,10 @@ fun PollutantCard(label: String, value: String, unit: String) {
     }
 }
 
+/**
+ * Generates dynamic, actionable health advice based on the provided AQI value.
+ * Supports dual-language output depending on the user's selected standard.
+ */
 fun getHealthAdvice(aqi: Int, useChineseStandard: Boolean): String {
     return if (useChineseStandard) {
         when {
@@ -309,6 +337,9 @@ fun getHealthAdvice(aqi: Int, useChineseStandard: Boolean): String {
     }
 }
 
+/**
+ * Determines the categorical severity level text based on the AQI score.
+ */
 fun getAqiLevel(aqi: Int, useChineseStandard: Boolean): String {
     return if (useChineseStandard) {
         when {
@@ -329,12 +360,15 @@ fun getAqiLevel(aqi: Int, useChineseStandard: Boolean): String {
     }
 }
 
+/**
+ * Maps the AQI score to an appropriate Material-style severity color.
+ */
 fun getAqiColor(aqi: Int): Color {
     return when {
-        aqi <= 50 -> Color(0xFF4CAF50)
-        aqi <= 100 -> Color(0xFFFFC107)
-        aqi <= 150 -> Color(0xFFFF9800)
-        aqi <= 200 -> Color(0xFFF44336)
-        else -> Color(0xFF9C27B0)
+        aqi <= 50 -> Color(0xFF4CAF50)  // Green
+        aqi <= 100 -> Color(0xFFFFC107) // Yellow
+        aqi <= 150 -> Color(0xFFFF9800) // Orange
+        aqi <= 200 -> Color(0xFFF44336) // Red
+        else -> Color(0xFF9C27B0)       // Purple (Hazardous)
     }
 }
